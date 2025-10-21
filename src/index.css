@@ -1,10 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-body {
-  @apply bg-[#E0F7FA] text-gray-900;
-}
+
+
+
 
 
 
