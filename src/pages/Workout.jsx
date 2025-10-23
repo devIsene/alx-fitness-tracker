@@ -1,175 +1,112 @@
-import React, { useState } from "react";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { fetchExercises, fetchMuscles } from "../api/wgerApi";
 
-const Workout = () => {
-  const navigate = useNavigate();
+export default function Workout() {
+  const [exercises, setExercises] = useState([]);
+  const [muscles, setMuscles] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedMuscle, setSelectedMuscle] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Updated and ordered exercise list
-  const exercises = [
-    // 🏋️‍♂️ Upper Body
-    {
-      name: "Push Ups",
-      category: "Upper Body",
-      image: "/images/pushups.jpg",
-    },
-    {
-      name: "Bench Press",
-      category: "Upper Body",
-      image: "/images/benchpress.jpg",
-    },
+  useEffect(() => {
+    const loadData = async () => {
+      const muscleData = await fetchMuscles();
+      setMuscles(muscleData);
+      const exerciseData = await fetchExercises();
+      setExercises(exerciseData);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
 
-    // 🦵 Lower Body
-    {
-      name: "Squats",
-      category: "Lower Body",
-      image: "/images/squats.jpg",
-    },
-    {
-      name: "Lunges",
-      category: "Lower Body",
-      image: "/images/lunges.jpg",
-    },
-
-    // 💪 Arms
-    {
-      name: "Bicep Curls",
-      category: "Arms",
-      image: "/images/bicepcurl.jpg",
-    },
-    {
-      name: "Tricep Dips",
-      category: "Arms",
-      image: "/images/tricepdips.jpg",
-    },
-
-    // 🦿 Legs
-    {
-      name: "Leg Press",
-      category: "Legs",
-      image: "/images/legpress.jpg",
-    },
-    {
-      name: "Calf Raises",
-      category: "Legs",
-      image: "/images/calfraises.jpg",
-    },
-
-    // 🧘 Core
-    {
-      name: "Plank",
-      category: "Core",
-      image: "/images/plank.jpg",
-    },
-    {
-      name: "Russian Twists",
-      category: "Core",
-      image: "/images/russiantwist.jpg",
-    },
-
-    // ⚡ Full Body
-    {
-      name: "Burpees",
-      category: "Full Body",
-      image: "/images/burpees.jpg",
-    },
-    {
-      name: "Mountain Climbers",
-      category: "Full Body",
-      image: "/images/mountainclimbers.jpg",
-    },
-  ];
-
-  const [selectedCategory, setSelectedCategory] = useState("All");
-
-  const filteredExercises =
-    selectedCategory === "All"
-      ? exercises
-      : exercises.filter((e) => e.category === selectedCategory);
+  const handleSearch = async () => {
+    setLoading(true);
+    const filtered = await fetchExercises(search, selectedMuscle);
+    setExercises(filtered);
+    setLoading(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 p-6">
-      {/* 🔙 Back Button */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="flex items-center text-indigo-700 hover:text-indigo-900 mb-6"
-      >
-        <ArrowLeft className="mr-2" /> Back to Dashboard
-      </button>
+    <div style={{ backgroundColor: "aqua", minHeight: "100vh", padding: "20px" }}>
+      <h1 style={{ textAlign: "center", color: "white" }}>💪 Workout Exercises</h1>
 
-      {/* 🏋️ Title */}
-      <h1 className="text-3xl font-bold text-center text-indigo-800 mb-6">
-        Workout Library 🏋️
-      </h1>
-
-      {/* 🧭 Filter Buttons */}
-      <div className="flex flex-wrap justify-center gap-2 mb-6">
-        {["All", "Upper Body", "Lower Body", "Arms", "Legs", "Core", "Full Body"].map(
-          (category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                selectedCategory === category
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white text-indigo-700 hover:bg-indigo-100"
-              }`}
-            >
-              {category}
-            </button>
-          )
-        )}
+      {/* Search and Filter */}
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>
+        <input
+          type="text"
+          placeholder="Search exercises..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: "10px", borderRadius: "8px", width: "200px" }}
+        />
+        <select
+          value={selectedMuscle}
+          onChange={(e) => setSelectedMuscle(e.target.value)}
+          style={{ padding: "10px", borderRadius: "8px" }}
+        >
+          <option value="">All Muscles</option>
+          {muscles.map((muscle) => (
+            <option key={muscle.id} value={muscle.id}>
+              {muscle.name_en || muscle.name}
+            </option>
+          ))}
+        </select>
+        <button onClick={handleSearch} style={{ padding: "10px", borderRadius: "8px" }}>
+          Search
+        </button>
       </div>
 
-      {/* 🧩 Exercise Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExercises.map((exercise, index) => (
-          <div
-            key={index}
-            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-lg transition transform hover:scale-105"
-          >
-            <img
-              src={exercise.image}
-              alt={exercise.name}
-              className="rounded-xl w-full h-48 object-cover mb-3"
-              onError={(e) => (e.target.src = "/images/default.jpg")} // fallback if missing
-            />
-            <h3 className="text-xl font-semibold text-indigo-700 mb-2">
-              {exercise.name}
-            </h3>
-            <p className="text-gray-500 text-sm mb-3">{exercise.category}</p>
+      {/* Loading Message */}
+      {loading && <p style={{ textAlign: "center", marginTop: "20px" }}>Loading exercises...</p>}
 
-            {/* 🧮 Input Fields */}
-            <div className="flex gap-2 mb-3">
-              <input
-                type="number"
-                placeholder="Sets"
-                className="w-1/3 border border-gray-300 rounded-lg p-2 text-sm"
-              />
-              <input
-                type="number"
-                placeholder="Reps"
-                className="w-1/3 border border-gray-300 rounded-lg p-2 text-sm"
-              />
-              <input
-                type="number"
-                placeholder="Weight (kg)"
-                className="w-1/3 border border-gray-300 rounded-lg p-2 text-sm"
+      {/* Exercises Display */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+          gap: "20px",
+          marginTop: "30px",
+        }}
+      >
+        {!loading && exercises.length > 0 ? (
+          exercises.map((exercise) => (
+            <div
+              key={exercise.id}
+              style={{
+                background: "white",
+                borderRadius: "12px",
+                padding: "15px",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h3 style={{ textAlign: "center" }}>{exercise.name}</h3>
+              {exercise.image ? (
+                <img
+                  src={exercise.image}
+                  alt={exercise.name}
+                  style={{ width: "100%", borderRadius: "8px", marginTop: "10px" }}
+                />
+              ) : (
+                <p style={{ textAlign: "center", color: "gray" }}>No image available</p>
+              )}
+              <p
+                style={{ marginTop: "10px", fontSize: "14px" }}
+                dangerouslySetInnerHTML={{ __html: exercise.description }}
               />
             </div>
-
-            {/* ➕ Add Button */}
-            <button className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
-              Add to Plan
-            </button>
-          </div>
-        ))}
+          ))
+        ) : (
+          !loading && <p style={{ textAlign: "center" }}>No exercises found 😢</p>
+        )}
       </div>
     </div>
   );
-};
+}
 
-export default Workout;
+
+
+
+
 
 
 
