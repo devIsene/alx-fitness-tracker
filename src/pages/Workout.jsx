@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchExercises, fetchMuscles } from "../api/wgerApi";
 
 export default function Workout() {
@@ -7,42 +8,94 @@ export default function Workout() {
   const [search, setSearch] = useState("");
   const [selectedMuscle, setSelectedMuscle] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Debounce timer
+  const [debounceTimer, setDebounceTimer] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const muscleData = await fetchMuscles();
-      setMuscles(muscleData);
-      const exerciseData = await fetchExercises();
-      setExercises(exerciseData);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const muscleData = await fetchMuscles();
+        setMuscles(muscleData);
+        
+        const exerciseData = await fetchExercises();
+        setExercises(exerciseData);
+        
+        console.log("Loaded exercises:", exerciseData); // Debug
+      } catch (err) {
+        setError("Failed to load data. Please try again.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
 
-  const handleSearch = async () => {
-    setLoading(true);
-    const filtered = await fetchExercises(search, selectedMuscle);
-    setExercises(filtered);
-    setLoading(false);
+  const handleSearch = async (searchTerm = search, muscleTerm = selectedMuscle) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const filtered = await fetchExercises(searchTerm, muscleTerm);
+      setExercises(filtered);
+    } catch (err) {
+      setError("Search failed. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-search with debounce (waits 500ms after typing stops)
+  const handleSearchInput = (value) => {
+    setSearch(value);
+    
+    // Clear existing timer
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    // Set new timer
+    const timer = setTimeout(() => {
+      handleSearch(value, selectedMuscle);
+    }, 500);
+    
+    setDebounceTimer(timer);
+  };
+
+  // Strip HTML tags for preview
+  const stripHtml = (html) => {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
   };
 
   return (
-    <div style={{ backgroundColor: "aqua", minHeight: "100vh", padding: "20px" }}>
-      <h1 style={{ textAlign: "center", color: "white" }}>💪 Workout Exercises</h1>
+    <div className="min-h-screen bg-cyan-500 p-5">
+      <h1 className="text-center text-white text-4xl font-bold mb-6">
+        💪 Workout Exercises
+      </h1>
 
       {/* Search and Filter */}
-      <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>
+      <div className="flex flex-wrap gap-3 justify-center mb-8">
         <input
           type="text"
           placeholder="Search exercises..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: "10px", borderRadius: "8px", width: "200px" }}
+          onChange={(e) => handleSearchInput(e.target.value)}
+          className="px-4 py-2 rounded-lg w-64 border-2 border-white focus:outline-none focus:border-blue-300"
         />
         <select
           value={selectedMuscle}
-          onChange={(e) => setSelectedMuscle(e.target.value)}
-          style={{ padding: "10px", borderRadius: "8px" }}
+          onChange={(e) => {
+            setSelectedMuscle(e.target.value);
+            handleSearch(search, e.target.value);
+          }}
+          className="px-4 py-2 rounded-lg border-2 border-white focus:outline-none"
         >
           <option value="">All Muscles</option>
           {muscles.map((muscle) => (
@@ -51,61 +104,78 @@ export default function Workout() {
             </option>
           ))}
         </select>
-        <button onClick={handleSearch} style={{ padding: "10px", borderRadius: "8px" }}>
+        <button 
+          onClick={() => handleSearch()}
+          className="px-6 py-2 bg-white text-cyan-600 font-semibold rounded-lg hover:bg-gray-100 transition"
+        >
           Search
         </button>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="text-center text-red-600 bg-white p-4 rounded-lg max-w-md mx-auto mb-4">
+          {error}
+        </div>
+      )}
+
       {/* Loading Message */}
-      {loading && <p style={{ textAlign: "center", marginTop: "20px" }}>Loading exercises...</p>}
+      {loading && (
+        <p className="text-center text-white text-xl mt-8">
+          Loading exercises...
+        </p>
+      )}
 
       {/* Exercises Display */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "20px",
-          marginTop: "30px",
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-8">
         {!loading && exercises.length > 0 ? (
           exercises.map((exercise) => (
             <div
               key={exercise.id}
-              style={{
-                background: "white",
-                borderRadius: "12px",
-                padding: "15px",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              }}
+              className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow"
             >
-              <h3 style={{ textAlign: "center" }}>{exercise.name}</h3>
+              <h3 className="text-center font-bold text-lg mb-3 text-gray-800">
+                {exercise.name}
+              </h3>
+              
               {exercise.image ? (
                 <img
                   src={exercise.image}
                   alt={exercise.name}
-                  style={{ width: "100%", borderRadius: "8px", marginTop: "10px" }}
+                  className="w-full h-48 object-cover rounded-lg mb-3"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
                 />
               ) : (
-                <p style={{ textAlign: "center", color: "gray" }}>No image available</p>
+                <div className="w-full h-48 bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                  <span className="text-gray-500">No image</span>
+                </div>
               )}
-              <p
-                style={{ marginTop: "10px", fontSize: "14px" }}
-                dangerouslySetInnerHTML={{ __html: exercise.description }}
-              />
+              
+              <div className="text-sm text-gray-600 line-clamp-3">
+                {stripHtml(exercise.description).substring(0, 150)}...
+              </div>
+              
+              {exercise.category && (
+                <div className="mt-3 text-xs text-cyan-600 font-semibold">
+                  Category: {exercise.category}
+                </div>
+              )}
             </div>
           ))
         ) : (
-          !loading && <p style={{ textAlign: "center" }}>No exercises found 😢</p>
+          !loading && (
+            <div className="col-span-full text-center text-white text-xl">
+              No exercises found 😢
+            </div>
+          )
         )}
       </div>
     </div>
   );
 }
-
-
-
-
 
 
 
