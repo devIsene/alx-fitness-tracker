@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExercises, fetchMuscles } from "../api/wgerApi";
 
@@ -10,25 +10,25 @@ export default function Workout() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Debounce timer
   const [debounceTimer, setDebounceTimer] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const muscleData = await fetchMuscles();
         setMuscles(muscleData);
-        
+
         const exerciseData = await fetchExercises();
         setExercises(exerciseData);
-        
-        console.log("Loaded exercises:", exerciseData); // Debug
+
+        console.log("✅ Loaded exercises:", exerciseData);
       } catch (err) {
-        setError("Failed to load data. Please try again.");
-        console.error(err);
+        setError("Failed to load data. Please check your connection and try again.");
+        console.error("❌ Fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -50,24 +50,14 @@ export default function Workout() {
     }
   };
 
-  // Auto-search with debounce (waits 500ms after typing stops)
   const handleSearchInput = (value) => {
     setSearch(value);
-    
-    // Clear existing timer
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-    
-    // Set new timer
-    const timer = setTimeout(() => {
-      handleSearch(value, selectedMuscle);
-    }, 500);
-    
+    if (debounceTimer) clearTimeout(debounceTimer);
+    const timer = setTimeout(() => handleSearch(value, selectedMuscle), 500);
     setDebounceTimer(timer);
   };
 
-  // Strip HTML tags for preview
+  // Strip HTML tags from descriptions
   const stripHtml = (html) => {
     const tmp = document.createElement("div");
     tmp.innerHTML = html;
@@ -76,11 +66,19 @@ export default function Workout() {
 
   return (
     <div className="min-h-screen bg-cyan-500 p-5">
+      {/* 🔙 Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="bg-white text-cyan-700 font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition mb-4"
+      >
+        ← Back
+      </button>
+
       <h1 className="text-center text-white text-4xl font-bold mb-6">
         💪 Workout Exercises
       </h1>
 
-      {/* Search and Filter */}
+      {/* 🔍 Search and Filter */}
       <div className="flex flex-wrap gap-3 justify-center mb-8">
         <input
           type="text"
@@ -104,7 +102,7 @@ export default function Workout() {
             </option>
           ))}
         </select>
-        <button 
+        <button
           onClick={() => handleSearch()}
           className="px-6 py-2 bg-white text-cyan-600 font-semibold rounded-lg hover:bg-gray-100 transition"
         >
@@ -112,40 +110,38 @@ export default function Workout() {
         </button>
       </div>
 
-      {/* Error Message */}
+      {/* ⚠️ Error Message */}
       {error && (
         <div className="text-center text-red-600 bg-white p-4 rounded-lg max-w-md mx-auto mb-4">
           {error}
         </div>
       )}
 
-      {/* Loading Message */}
+      {/* ⏳ Loading */}
       {loading && (
-        <p className="text-center text-white text-xl mt-8">
-          Loading exercises...
-        </p>
+        <p className="text-center text-white text-xl mt-8">Loading exercises...</p>
       )}
 
-      {/* Exercises Display */}
+      {/* 🏋️ Exercises Display */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-8">
         {!loading && exercises.length > 0 ? (
-          exercises.map((exercise) => (
+          exercises.map((exercise, index) => (
             <div
-              key={exercise.id}
+              key={exercise.id || index} // ✅ Fix: unique key
               className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow"
             >
               <h3 className="text-center font-bold text-lg mb-3 text-gray-800">
-                {exercise.name}
+                {exercise.name || "Unnamed Exercise"}
               </h3>
-              
+
               {exercise.image ? (
                 <img
                   src={exercise.image}
                   alt={exercise.name}
                   className="w-full h-48 object-cover rounded-lg mb-3"
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "block";
                   }}
                 />
               ) : (
@@ -153,11 +149,13 @@ export default function Workout() {
                   <span className="text-gray-500">No image</span>
                 </div>
               )}
-              
+
               <div className="text-sm text-gray-600 line-clamp-3">
-                {stripHtml(exercise.description).substring(0, 150)}...
+                {exercise.description
+                  ? stripHtml(exercise.description).substring(0, 150) + "..."
+                  : "No description available."}
               </div>
-              
+
               {exercise.category && (
                 <div className="mt-3 text-xs text-cyan-600 font-semibold">
                   Category: {exercise.category}
@@ -176,6 +174,7 @@ export default function Workout() {
     </div>
   );
 }
+
 
 
 

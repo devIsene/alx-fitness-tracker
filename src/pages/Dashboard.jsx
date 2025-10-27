@@ -1,74 +1,74 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Dumbbell, BarChart3, BookOpen, LogOut } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
+  // Handle logout
   const handleLogout = () => {
-    // Temporary logout logic
-    localStorage.removeItem("user"); // (optional placeholder)
-    navigate("/login");
+    localStorage.removeItem("currentUser"); // clear the current user
+    navigate("/login"); // go back to login page
   };
 
   return (
-    <div className="min-h-screen bg-[#E0F7FA] flex flex-col items-center p-6 text-gray-800">
+    <div className="min-h-screen bg-cyan-500 flex flex-col items-center p-8 text-white">
       {/* Header */}
-      <div className="w-full flex justify-between items-center mb-8 max-w-5xl">
-        <h1 className="text-3xl font-bold text-blue-700 flex items-center gap-2">
-          🏋️‍♂️ Fitness Dashboard
+      <div className="flex justify-between items-center w-full max-w-4xl mb-8">
+        <h1 className="text-3xl font-bold">
+          🏠 Fitness Tracker Dashboard
         </h1>
+
+        {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium shadow-md"
+          className="flex items-center gap-2 bg-white text-cyan-600 font-semibold py-2 px-4 rounded-full shadow hover:bg-gray-100 transition"
         >
+          <LogOut size={20} />
           Logout
         </button>
       </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 w-full max-w-5xl">
-        <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition">
-          <h2 className="text-lg font-semibold text-gray-600">Daily Steps</h2>
-          <p className="text-3xl font-bold text-blue-600 mt-2">8,250</p>
-        </div>
-
-        <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition">
-          <h2 className="text-lg font-semibold text-gray-600">Calories Burned</h2>
-          <p className="text-3xl font-bold text-orange-500 mt-2">540 kcal</p>
-        </div>
-
-        <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:scale-105 transition">
-          <h2 className="text-lg font-semibold text-gray-600">Active Minutes</h2>
-          <p className="text-3xl font-bold text-green-500 mt-2">65 min</p>
-        </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex space-x-6 mb-10">
-        <Link
-          to="/workout"
-          className="bg-blue-500 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-blue-600 transition shadow-md"
+      {/* Main Buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
+        {/* Log + History Button */}
+        <button
+          onClick={() => navigate("/logworkout")}
+          className="bg-white text-cyan-600 font-semibold py-6 px-8 rounded-2xl shadow-lg flex flex-col items-center transition-transform hover:scale-105 hover:bg-gray-100"
         >
-          🏋️‍♀️ Workouts
-        </Link>
+          <Dumbbell size={40} className="mb-2" />
+          Log & View Workouts
+        </button>
 
-        <Link
-          to="/progress"
-          className="bg-green-500 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-green-600 transition shadow-md"
+        {/* Progress Button */}
+        <button
+          onClick={() => navigate("/progress")}
+          className="bg-white text-cyan-600 font-semibold py-6 px-8 rounded-2xl shadow-lg flex flex-col items-center transition-transform hover:scale-105 hover:bg-gray-100"
         >
-          📊 Progress
-        </Link>
+          <BarChart3 size={40} className="mb-2" />
+          View Progress
+        </button>
+
+        {/* Exercise Library */}
+        <button
+          onClick={() => navigate("/workout")}
+          className="bg-white text-cyan-600 font-semibold py-6 px-8 rounded-2xl shadow-lg flex flex-col items-center transition-transform hover:scale-105 hover:bg-gray-100"
+        >
+          <BookOpen size={40} className="mb-2" />
+          Exercise Library
+        </button>
       </div>
 
       {/* Motivational Quote */}
-      <p className="text-xl italic font-medium text-gray-700 text-center max-w-2xl">
-        “Discipline is doing what needs to be done, even when you don’t feel like it.”
+      <p className="mt-10 text-lg italic text-center max-w-2xl">
+        "Success in the gym — and in life — comes from consistency, not perfection. 🏋️‍♂️"
       </p>
     </div>
   );
 };
 
 export default Dashboard;
+
 
 
 

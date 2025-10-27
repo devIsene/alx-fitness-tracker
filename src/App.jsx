@@ -5,8 +5,9 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Workout from "./pages/Workout.jsx";
 import Progress from "./pages/Progress.jsx";
+import LogWorkout from "./pages/LogWorkout.jsx"; // ✅ Add this import
 
-// Wrapper to conditionally apply layout styles
+// Layout Wrapper
 const AppLayout = ({ children }) => {
   const location = useLocation();
   const isAuthPage =
@@ -41,6 +42,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/workout" element={<Workout />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/logworkout" element={<LogWorkout />} /> {/* ✅ Added route */}
         </Routes>
       </AppLayout>
     </Router>
@@ -48,6 +50,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
